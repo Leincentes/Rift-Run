@@ -1,0 +1,60 @@
+name: Deploy Rift Run Production and Beta
+
+on:
+  push:
+    branches:
+      - main
+      - beta
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Production branch
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          path: source-production
+          persist-credentials: false
+      - name: Checkout Beta branch
+        uses: actions/checkout@v6
+        with:
+          ref: beta
+          path: source-beta
+          persist-credentials: false
+      - name: Verify Production and Beta builds
+        run: |
+          node source-production/scripts/check-release.mjs --channel production --dir source-production
+          node source-beta/scripts/check-release.mjs --channel beta --dir source-beta
+      - name: Assemble both channels for GitHub Pages
+        run: node source-production/scripts/build-pages.mjs --production source-production --beta source-beta --out _site
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
