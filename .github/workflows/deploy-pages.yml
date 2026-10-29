@@ -38,8 +38,6 @@ jobs:
           node source-beta/scripts/check-release.mjs --channel beta --dir source-beta
       - name: Assemble both channels for GitHub Pages
         run: node source-production/scripts/build-pages.mjs --production source-production --beta source-beta --out _site
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:

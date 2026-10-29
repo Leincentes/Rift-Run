@@ -30,6 +30,10 @@ export function readAndValidateChannel(dir, expectedChannel) {
   if (!title) fail(`${expectedChannel}: index.html has no title`);
   if (expectedChannel === 'production' && /\bbeta\b/i.test(title)) fail('Production page title must not say Beta');
   if (expectedChannel === 'beta' && !/\bbeta\b/i.test(title)) fail('Beta page title should identify itself as Beta');
+  if (expectedChannel === 'production' && /PLAYTEST TOOLS|Quick Feedback|session recorder|Rift Run Beta/i.test(html)) {
+    fail('Production HTML contains a Beta-only testing marker');
+  }
+  if (expectedChannel === 'beta' && !/PLAYTEST TOOLS/i.test(html)) fail('Beta HTML is missing its expected Beta testing tools marker');
 
   if (!/href=["']\.\/manifest\.webmanifest["']/i.test(html)) fail(`${expectedChannel}: index.html does not link to ./manifest.webmanifest`);
   if (!/serviceWorker\.register\(["']\.\/sw\.js["']/i.test(html)) fail(`${expectedChannel}: index.html does not register ./sw.js`);

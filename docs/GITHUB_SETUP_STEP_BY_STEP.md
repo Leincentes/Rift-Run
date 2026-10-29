@@ -23,7 +23,7 @@ git status
 git branch
 ```
 
-You should see `main` as the current branch and `beta` as another local branch. If Git is not recognized, install Git for Windows from https://git-scm.com/download/win, close PowerShell, open it again in the project folder, and repeat the commands.
+You should see `main` as the current branch and `beta` as another local branch. If Git is not recognized, install Git for Windows from https://git-scm.com/download/win, close PowerShell, open it again in the project folder, and repeat the commands. For local release-refresh scripts later, also install Node.js 22 LTS from https://nodejs.org/. The GitHub Actions checks run on GitHub and do not require Node to be installed on your PC just to push branches.
 
 ## Part 3 — Connect and push both branches
 
