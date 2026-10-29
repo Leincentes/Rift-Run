@@ -1,33 +1,48 @@
-# Production and Beta branch rules
+# Production and Beta build workflow
 
-## What each branch means
+## Architecture
 
-- `main`: clean Production build users should play.
-- `beta`: pre-release build with Beta-only recorder, surveys, and diagnostics.
+The repository keeps one maintained game source: `source/game.html`, which is always Production-safe. Beta-only interface, recorder instrumentation, tester metadata, surveys and JSON export are carried in `patches/beta-overlay.patch`. The build script applies that patch to a temporary copy and generates a second HTML export. It does not maintain two unrelated game files by hand.
 
-The Pages workflow checks out both branches and assembles a single deployment artifact with two separate directories. A push to either branch causes the site to be rebuilt from the latest `main` and `beta` refs.
+PWA files are separated by channel under `channels/production/` and `channels/beta/`. The two outputs are assembled to `_site/`:
+
+- `index.html` — Production
+- `beta/index.html` — Beta
+
+The manifests, service-worker cache names, metadata and scopes remain channel-specific.
 
 ## Safe release cycle
 
-1. Generate a Beta build.
-2. Update and push it on `beta`.
-3. Test the live `/beta/` site.
-4. Fix issues in Beta and repeat.
-5. When approved, generate a separate Production build that includes the approved gameplay changes but no Beta-only UI/telemetry.
-6. Update and push the clean build on `main`.
-7. Test the root Production URL.
+1. Change and test Beta using an exported Beta HTML file; never substitute the Beta file for the canonical source.
+2. When promoting approved gameplay, prepare two exports from the same gameplay baseline: one Production-safe export and one Beta export containing its intended test tools.
+3. Refresh Production:
 
-Do not merge the branches. They contain different compiled single-file HTML exports; an ordinary merge would put the Beta runtime into Production.
+   ```bash
+   node scripts/refresh-build.mjs --channel production --html "/path/to/Rift_Run_Production_v0.8.4.html"
+   ```
+
+4. Refresh the Beta overlay and channel shell with the matching Beta export:
+
+   ```bash
+   node scripts/refresh-build.mjs --channel beta --html "/path/to/Rift_Run_Beta_v0.8.4-beta.1.html"
+   ```
+
+5. Run `npm test` and `npm run build:pages`. Review changes to the canonical game, Beta overlay, manifests, and service workers.
+6. Commit the source/configuration changes to `main`; GitHub Actions checks and deploys both channel roots.
+7. Verify the deployed URLs, PWA install/update behavior, storage isolation, backup/restore, rollback and actual device behavior before declaring the release production-ready.
+
+**Important:** the Production export must be Beta-safe before it is saved as `source/game.html`. The refresh script rejects known Beta recorder/UI markers. The Beta export is converted into a patch; the full Beta HTML is not stored as a second maintained source file.
+
+## Automated release gates
+
+The regression suite asserts that:
+
+- Production source excludes playtest recorder functions/calls, test storage keys, tester IDs, playtest UI, quick-feedback survey and feedback JSON export markers.
+- Beta output carries its testing panel, recorder and testing storage key.
+- Production and Beta have different manifests and service-worker namespaces.
+- The overlay applies cleanly to the canonical source, both channel markers are valid, relative PWA paths are retained, and the inline script matches the CSP hash.
+- A test that injects recorder code into Production is rejected by the production checker.
 
 ## Recovery
 
-If an update breaks a channel, run `git log --oneline` on that branch, find the last known-good commit, and use `git revert <commit>` to create a new reversal commit, then push. Avoid force-pushing shared release branches.
-
-## What the deployment workflow checks
-
-- Correct `RIFT_RUN_RELEASE` channel marker.
-- Content Security Policy SHA-256 hash matches the actual inline game script.
-- The manifest, service worker, and icons required by the PWA exist.
-- Manifest names and service-worker cache prefixes match the intended channel.
-- Production and Beta use different app-shell and cache namespaces.
-- The composed Pages output contains both channel roots and the expected index/manifest/service-worker assets.
+Keep the last known-good production HTML and its complete PWA shell. If a release fails, roll back the matching source, patch and channel shell files together, then run all checks before redeploying. Never deploy an HTML file with another version's CSP hash or service-worker cache metadata.

@@ -1,0 +1,15 @@
+{
+  "name": "rift-run-release-builder",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Reproducible Production and Beta builds for the standalone Rift Run browser game.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "build:pages": "node scripts/build-pages.mjs --out _site",
+    "check:production": "node scripts/check-release.mjs --channel production --dir _site",
+    "check:beta": "node scripts/check-release.mjs --channel beta --dir _site/beta"
+  }
+}

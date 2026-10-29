@@ -30,10 +30,31 @@ export function readAndValidateChannel(dir, expectedChannel) {
   if (!title) fail(`${expectedChannel}: index.html has no title`);
   if (expectedChannel === 'production' && /\bbeta\b/i.test(title)) fail('Production page title must not say Beta');
   if (expectedChannel === 'beta' && !/\bbeta\b/i.test(title)) fail('Beta page title should identify itself as Beta');
-  if (expectedChannel === 'production' && /PLAYTEST TOOLS|Quick Feedback|session recorder|Rift Run Beta/i.test(html)) {
-    fail('Production HTML contains a Beta-only testing marker');
+  if (expectedChannel === 'production') {
+    const forbidden = [
+      ['playtest recorder function/calls', /\brecordPlaytestEvent\b/i],
+      ['playtest storage key', /\bPLAYTEST_KEY\b/i],
+      ['active playtest session state', /\bactivePlaytestSession\b/i],
+      ['active playtest run state', /\bactivePlaytestRun\b/i],
+      ['playtest session collection', /\bmemoryPlaytestSessions\b|\breadPlaytestSessions\b|\bpersistPlaytestSession\b/i],
+      ['tester identifier instrumentation', /\btesterId\b/i],
+      ['playtest UI panel/classes/styles', /PLAYTEST\s+TOOLS|playtest-tools-card|playtest-panel|playtest-controls|playtest-panel|feedback-panel|feedback-field|feedback-grid|release-check-item|release-runtime/i],
+      ['quick feedback survey', /quick\s+(player\s+)?feedback/i],
+      ['feedback JSON export text/code', /feedback.{0,40}json|json.{0,40}feedback/i],
+      ['Beta branding', /Rift Run Beta|RELEASE CANDIDATE|\b0\.\d+\.\d+-beta(?:\.\d+)?\b/i],
+    ];
+    const hits = forbidden.filter(([, pattern]) => pattern.test(html)).map(([label]) => label);
+    if (hits.length) fail(`Production HTML contains Beta-only testing content: ${hits.join(', ')}`);
   }
-  if (expectedChannel === 'beta' && !/PLAYTEST TOOLS/i.test(html)) fail('Beta HTML is missing its expected Beta testing tools marker');
+  if (expectedChannel === 'beta') {
+    const required = [
+      ['PLAYTEST TOOLS panel', /PLAYTEST\s+TOOLS/i],
+      ['playtest recorder function/calls', /\brecordPlaytestEvent\b/i],
+      ['playtest storage key', /\bPLAYTEST_KEY\b/i],
+    ];
+    const missing = required.filter(([, pattern]) => !pattern.test(html)).map(([label]) => label);
+    if (missing.length) fail(`Beta HTML is missing required test tools: ${missing.join(', ')}`);
+  }
 
   if (!/href=["']\.\/manifest\.webmanifest["']/i.test(html)) fail(`${expectedChannel}: index.html does not link to ./manifest.webmanifest`);
   if (!/serviceWorker\.register\(["']\.\/sw\.js["']/i.test(html)) fail(`${expectedChannel}: index.html does not register ./sw.js`);

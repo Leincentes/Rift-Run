@@ -586,12 +586,7 @@
 #appShell .detail-card > summary { min-width: 0; flex-wrap: wrap; gap: 6px 12px; }
 #appShell .detail-card > summary > span { min-width: 0; flex: 1 1 auto; }
 #appShell .detail-card > summary small { max-width: 100%; white-space: normal; line-height: 1.35; overflow-wrap: anywhere; }
-#appShell .achievement, #appShell .history-row, #appShell .hangar-item, #appShell .hangar-equipped,
-#appShell .release-check-item, #appShell .release-runtime, #appShell .feedback-field,
-#appShell .feedback-panel, #appShell .playtest-panel { min-width: 0; overflow-wrap: anywhere; }
-#appShell .feedback-field select, #appShell .feedback-field input, #appShell .feedback-field textarea { min-width: 0; max-width: 100%; }
-#appShell .feedback-field { line-height: 1.4; }
-#appShell .feedback-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+#appShell .achievement, #appShell .history-row, #appShell .hangar-item, #appShell .hangar-equipped { min-width: 0; overflow-wrap: anywhere; }
 /* These dialogs sit over a live canvas. Make their surfaces opaque so canvas labels never bleed through the dialog text. */
 .tutorial-modal-shell { background: rgba(5,3,13,.995) !important; backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; }
 .tutorial-card, .tutorial-welcome, .tutorial-complete, .rift-fork-card, .reward-dialog, .evolution-dialog, .rotate-card { background: #0d0920 !important; }
@@ -619,7 +614,6 @@
   #appHeader .pill { display: none !important; }
   #appShell .detail-card > summary { align-items: flex-start; }
   #appShell .detail-card > summary small { flex: 1 0 100%; margin-left: 28px; text-align: left; }
-  #appShell .feedback-grid { grid-template-columns: minmax(0,1fr); }
   #appShell .run-recap-heading { flex-wrap: wrap; }
   #appShell .run-recap-score { flex: 1 1 100%; }
   #appShell .run-recap-actions { grid-template-columns: minmax(0,1fr); }

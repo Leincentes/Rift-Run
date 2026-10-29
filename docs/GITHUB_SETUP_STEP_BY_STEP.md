@@ -1,111 +1,91 @@
-# Rift Run on GitHub — step-by-step setup
+# Publish Rift Run with GitHub Pages
 
-This starter is already a local Git repository with two branches: `main` (Production) and `beta` (Beta). Your first job is to connect it to an empty GitHub repository and push both branches.
+This repository deploys both Production and Beta from one canonical source. GitHub Pages hosting for this public project is free.
 
-## Part 1 — Create the remote repository
+## 1. Create an empty GitHub repository
 
-1. Sign in to GitHub.
-2. Open https://github.com/new.
-3. Set the repository name to `rift-run` (or another name you prefer).
-4. For free GitHub Pages hosting, set visibility to **Public**. GitHub Pages is available for private repositories only on eligible paid plans.
-5. **Do not** select “Add a README,” “Add .gitignore,” or “Choose a license.” The starter already contains files and Git history; an empty remote avoids unrelated-history conflicts.
-6. Click **Create repository** and keep the repository page open.
+1. Sign in at GitHub and open https://github.com/new.
+2. Name the repository `rift-run` (or another name you prefer).
+3. For a free GitHub Pages site, set visibility to **Public**.
+4. Do not initialize the remote with another README, `.gitignore`, or license. This starter already has those files and local Git history.
+5. Create the repository and keep the page open.
 
-## Part 2 — Extract the prepared repository
+## 2. Extract the starter
 
-1. Download and extract `Rift_Run_GitHub_Production_Beta_Starter.zip` to a folder you can keep, such as `C:\Games\Rift-Run-GitHub`.
-2. In File Explorer, open that folder. It should contain `index.html`, `manifest.webmanifest`, `sw.js`, `README.md`, `docs`, `scripts`, and a hidden `.git` folder. If `.git` is missing, the archive was not extracted as a complete Git starter; extract it again using Windows' Extract All or 7-Zip.
-3. Open PowerShell in that exact folder: click the folder address bar, type `powershell`, and press Enter.
-4. Run these commands:
+1. Extract `Rift_Run_GitHub_Production_Beta_Starter.zip` into a permanent folder, such as `C:\Games\Rift-Run-GitHub`.
+2. Confirm the folder contains `source`, `channels`, `patches`, `scripts`, `tests`, `docs`, `.github`, `README.md`, and the hidden `.git` directory.
+3. Open PowerShell in that folder and run:
+
+   ```powershell
+   git status
+   git branch
+   node --version
+   ```
+
+4. Node.js 22+ and Git for Windows are required for local tests and release refreshes. Install them from https://nodejs.org/ and https://git-scm.com/download/win if necessary.
+
+## 3. Run checks before publishing
 
 ```powershell
-git status
-git branch
+npm test
+npm run build:pages
+npm run check:production
+npm run check:beta
 ```
 
-You should see `main` as the current branch and `beta` as another local branch. If Git is not recognized, install Git for Windows from https://git-scm.com/download/win, close PowerShell, open it again in the project folder, and repeat the commands. For local release-refresh scripts later, also install Node.js 22 LTS from https://nodejs.org/. The GitHub Actions checks run on GitHub and do not require Node to be installed on your PC just to push branches.
+These commands must pass before you push. The deploy workflow repeats the tests and build on GitHub.
 
-## Part 3 — Connect and push both branches
+## 4. Connect and push the repository
 
-Copy the HTTPS repository URL from your GitHub page. It looks like `https://github.com/YOUR-USERNAME/rift-run.git`.
-
-Run these commands, replacing the sample URL with your real URL:
+Copy the HTTPS repository URL, then run this in PowerShell (replace the example URL with your own):
 
 ```powershell
 git remote add origin https://github.com/YOUR-USERNAME/rift-run.git
-git push -u origin main beta
+git push -u origin main
 ```
 
-Sign in when Git asks. Do not paste a password or access token into this guide or a public file. Git Credential Manager can open a browser sign-in.
+Use the browser sign-in provided by Git Credential Manager. Never put a password or access token in a source file, README, or chat. This workflow publishes from `main`; Beta is an output at `/beta/`, not a separately maintained full HTML branch.
 
-Check both branches exist on GitHub: open the repository's **Branches** page. You should see `main` and `beta`.
+## 5. Enable GitHub Pages
 
-## Part 4 — Turn on GitHub Pages
+1. In the GitHub repository, open **Settings → Pages**.
+2. Under **Build and deployment → Source**, choose **GitHub Actions**.
+3. Open **Actions** and check that “Build and deploy Rift Run Production + Beta” completes successfully.
+4. After deploy succeeds, use the site URL shown by GitHub.
 
-1. In the repository, open **Settings**.
-2. In the sidebar, choose **Pages**.
-3. Under **Build and deployment → Source**, choose **GitHub Actions**.
-4. Open the **Actions** tab. The workflow named “Deploy Rift Run Production and Beta” should run after the branch push. If multiple runs appear, let the latest run finish.
-5. Open the workflow run and make sure the build and deploy jobs are green.
-6. GitHub will show the Pages site URL. The exact URL may take a few minutes to become available.
+The resulting URLs look like:
 
-The workflow builds one site with two isolated app roots: Production at `/` and Beta at `/beta/`. Each path gets its own `index.html`, manifest, icons, and service worker. This matters because relative PWA paths and the two channel-specific caches should stay separate.
+- Production: `https://YOUR-USERNAME.github.io/rift-run/`
+- Beta: `https://YOUR-USERNAME.github.io/rift-run/beta/`
 
-## Part 5 — Verify each version
+## 6. Verify before installing
 
-Open the URLs shown by GitHub Pages:
+Open both URLs in a browser. Production should show the stable game identity and must not include playtest tools, a recorder, tester IDs, feedback survey/export controls, or debug-only UI. Beta should identify itself as Beta and keep its local playtest recorder and feedback export. Confirm normal gameplay, onboarding, touch/keyboard controls, preferences, achievements, local saves, backup/restore, service-worker update and offline relaunch.
 
-- `https://YOUR-USERNAME.github.io/rift-run/` — Production.
-- `https://YOUR-USERNAME.github.io/rift-run/beta/` — Beta.
+Do not call the game “production-ready” based only on a green build. Test the deployed HTTPS site on supported desktop browsers and physical mobile devices, verify recovery/rollback, and collect actual independent-player feedback before release approval.
 
-Replace the username and repository segment with yours. Verify the title/version and that Beta-only testing tools appear only in Beta. Install the Production app only after checking the Production URL. Avoid installing Beta and Production under the same browser path; they are served from distinct scopes here.
+## 7. Refresh the game later
 
-## How you update the game later
-
-**Update Beta first**
-
-1. Switch to Beta: `git switch beta`.
-2. Get a new Beta HTML export from your build process. Keep the exact file path handy.
-3. Run the refresh script so it verifies the channel and synchronizes the manifest description and service-worker cache:
-
-```powershell
-node scripts/refresh-build.mjs --channel beta --html "C:\Path\To\Rift_Run_Beta_v0.8.4-beta.1.html"
-node scripts/check-release.mjs --channel beta --dir .
-git status
-git add index.html manifest.webmanifest sw.js README.md
-git commit -m "Update Beta build to v0.8.4-beta.1"
-git push
-```
-
-4. Check the GitHub Actions run, then test the `/beta/` URL.
-
-**Release to Production later**
-
-1. Only after testing, obtain a **Production-safe HTML export** of the approved feature. Do not simply rename the Beta HTML; it may contain Beta-only tools.
-2. Run `git switch main`.
-3. Refresh and check it:
+Keep the two matching channel exports on your computer. Refresh the approved Production-safe export, then refresh Beta against that updated source:
 
 ```powershell
 node scripts/refresh-build.mjs --channel production --html "C:\Path\To\Rift_Run_Production_v0.8.4.html"
-node scripts/check-release.mjs --channel production --dir .
+node scripts/refresh-build.mjs --channel beta --html "C:\Path\To\Rift_Run_Beta_v0.8.4-beta.1.html"
+npm test
+npm run build:pages
 git status
-git add index.html manifest.webmanifest sw.js README.md
-git commit -m "Release Rift Run v0.8.4"
-git push
+git diff
 ```
 
-4. Check the workflow and test the root Production URL.
-
-**Never merge the Beta branch into `main` directly.** The packaged files are different by design. Promoting means generating and committing the clean Production build on `main`, not copying Beta's testing build into Production.
+Inspect the diff, then commit and push to `main`. The script never accepts a Beta build as the canonical Production source, and it generates a Beta patch rather than keeping a second full game file in the repository.
 
 ## Troubleshooting
 
-- **`remote origin already exists`:** run `git remote -v`; if it points to the wrong URL, use `git remote set-url origin https://github.com/YOUR-USERNAME/rift-run.git`.
-- **`src refspec beta does not match any`:** confirm you extracted the full starter and `git branch` lists `beta`.
-- **Pages workflow says a branch is missing:** make sure both `main` and `beta` were pushed; rerun the workflow from the Actions tab.
-- **Workflow cannot deploy Pages:** confirm Pages source is **GitHub Actions** and the repository's Actions permissions allow workflows to run. The workflow declares the required Pages deploy permissions itself.
-- **The page looks old after updating:** wait for the workflow to finish; hard-refresh the browser. If you installed the PWA, close it and reopen after the service worker updates.
+- **`remote origin already exists`:** use `git remote -v` and `git remote set-url origin https://github.com/YOUR-USERNAME/rift-run.git` if it points to the wrong repository.
+- **The Beta overlay no longer applies:** regenerate it only from a matching Production-safe export and the intended Beta export, then run all tests. Do not hand-edit `_site/` output.
+- **GitHub Pages deployment fails:** confirm Pages uses GitHub Actions and repository Actions permissions are enabled.
+- **The site appears old:** inspect the latest Actions run, hard-refresh the page, and close/reopen any installed PWA so its service worker can update.
 
 Official references:
-- Create/push an existing local repository: https://docs.github.com/en/migrations/importing-source-code/using-the-command-line-to-import-source-code/adding-locally-hosted-code-to-github
-- Configure GitHub Pages with Actions: https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site
+- https://docs.github.com/en/migrations/importing-source-code/using-the-command-line-to-import-source-code/adding-locally-hosted-code-to-github
+- https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site

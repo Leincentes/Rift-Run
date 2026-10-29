@@ -1,10 +1,8 @@
-name: Deploy Rift Run Production and Beta
+name: Build and deploy Rift Run Production + Beta
 
 on:
   push:
-    branches:
-      - main
-      - beta
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -17,27 +15,19 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
-      - name: Checkout Production branch
+      - name: Check out canonical source and release configuration
         uses: actions/checkout@v6
         with:
-          ref: main
-          path: source-production
           persist-credentials: false
-      - name: Checkout Beta branch
-        uses: actions/checkout@v6
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          ref: beta
-          path: source-beta
-          persist-credentials: false
-      - name: Verify Production and Beta builds
-        run: |
-          node source-production/scripts/check-release.mjs --channel production --dir source-production
-          node source-beta/scripts/check-release.mjs --channel beta --dir source-beta
-      - name: Assemble both channels for GitHub Pages
-        run: node source-production/scripts/build-pages.mjs --production source-production --beta source-beta --out _site
+          node-version: 22
+      - name: Run regression tests
+        run: npm test
+      - name: Build and validate both channels
+        run: npm run build:pages
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:

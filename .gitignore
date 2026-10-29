@@ -7,3 +7,6 @@ _site/
 public-preview/
 
 .refresh-check/
+node_modules/
+_site/
+.tmp/

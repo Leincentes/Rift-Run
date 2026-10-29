@@ -1,0 +1,7 @@
+/* Rift Run 0.8.3-beta.1 beta PWA cache. This channel only retires its own old caches. */
+const CACHE_NAME="rift-run-beta-v0-8-3-beta-1";
+const CACHE_PREFIX="rift-run-beta-";
+const APP_SHELL=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
+self.addEventListener('install',event=>{event.waitUntil((async()=>{const c=await caches.open(CACHE_NAME);await c.addAll(APP_SHELL);await self.skipWaiting();})());});
+self.addEventListener('activate',event=>{event.waitUntil((async()=>{const names=await caches.keys();await Promise.all(names.filter(n=>n.startsWith(CACHE_PREFIX)&&n!==CACHE_NAME).map(n=>caches.delete(n)));await self.clients.claim();})());});
+self.addEventListener('fetch',event=>{const r=event.request;if(r.method!=='GET'||new URL(r.url).origin!==self.location.origin)return;if(r.mode==='navigate'){event.respondWith((async()=>{try{const fresh=await fetch(r);if(fresh&&fresh.ok){const c=await caches.open(CACHE_NAME);c.put('./index.html',fresh.clone()).catch(()=>{});}return fresh;}catch(_){return (await caches.match('./index.html'))||(await caches.match('./'))||Response.error();}})());return;}event.respondWith((async()=>{const old=await caches.match(r);if(old)return old;try{const fresh=await fetch(r);if(fresh&&fresh.ok&&fresh.type!=='opaque'){const c=await caches.open(CACHE_NAME);c.put(r,fresh.clone()).catch(()=>{});}return fresh;}catch(_){return (await caches.match(r))||Response.error();}})());});
